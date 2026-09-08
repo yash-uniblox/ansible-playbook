@@ -1,6 +1,6 @@
 ---
-- name: Install Ollama, K3s and Traefik
-  hosts: all
+- name: Install K3s, Ollama and Traefik
+  hosts: k3s_server
   become: true
 
   tasks:
@@ -67,7 +67,7 @@
 
 
     # --------------------------------
-    # Wait for Kubernetes API
+    # Wait for Kubernetes
     # --------------------------------
 
     - name: Wait for K3s to become ready
@@ -92,15 +92,6 @@
     - name: Display Traefik status
       debug:
         msg: "{{ traefik_check.stdout }}"
-
-    - name: Check Traefik pods
-      command: k3s kubectl get pods -n kube-system -l app.kubernetes.io/name=traefik
-      register: traefik_pods
-      changed_when: false
-
-    - name: Display Traefik pods
-      debug:
-        msg: "{{ traefik_pods.stdout }}"
 
 
     # --------------------------------
