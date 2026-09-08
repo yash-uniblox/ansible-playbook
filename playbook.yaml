@@ -1,0 +1,135 @@
+---
+- name: Install Ollama, K3s and Traefik
+  hosts: all
+  become: true
+
+  tasks:
+
+    # --------------------------------
+    # System preparation
+    # --------------------------------
+
+    - name: Update apt cache
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install required packages
+      apt:
+        name:
+          - curl
+          - ca-certificates
+          - gnupg
+          - apt-transport-https
+        state: present
+
+
+    # --------------------------------
+    # Install Ollama
+    # --------------------------------
+
+    - name: Check if Ollama is installed
+      command: ollama --version
+      register: ollama_check
+      failed_when: false
+      changed_when: false
+
+    - name: Install Ollama
+      shell: curl -fsSL https://ollama.com/install.sh | sh
+      when: ollama_check.rc != 0
+
+    - name: Enable and start Ollama
+      systemd:
+        name: ollama
+        enabled: true
+        state: started
+
+
+    # --------------------------------
+    # Install K3s
+    # --------------------------------
+
+    - name: Check if K3s is installed
+      command: k3s --version
+      register: k3s_check
+      failed_when: false
+      changed_when: false
+
+    - name: Install K3s
+      shell: curl -sfL https://get.k3s.io | sh -
+      when: k3s_check.rc != 0
+
+    - name: Enable and start K3s
+      systemd:
+        name: k3s
+        enabled: true
+        state: started
+
+
+    # --------------------------------
+    # Wait for Kubernetes API
+    # --------------------------------
+
+    - name: Wait for K3s to become ready
+      command: k3s kubectl get nodes
+      register: k3s_nodes
+      retries: 10
+      delay: 10
+      until: k3s_nodes.rc == 0
+      changed_when: false
+
+
+    # --------------------------------
+    # Verify Traefik
+    # --------------------------------
+
+    - name: Check Traefik deployment
+      command: k3s kubectl get deployment traefik -n kube-system
+      register: traefik_check
+      failed_when: false
+      changed_when: false
+
+    - name: Display Traefik status
+      debug:
+        msg: "{{ traefik_check.stdout }}"
+
+    - name: Check Traefik pods
+      command: k3s kubectl get pods -n kube-system -l app.kubernetes.io/name=traefik
+      register: traefik_pods
+      changed_when: false
+
+    - name: Display Traefik pods
+      debug:
+        msg: "{{ traefik_pods.stdout }}"
+
+
+    # --------------------------------
+    # Verification
+    # --------------------------------
+
+    - name: Check Ollama version
+      command: ollama --version
+      register: ollama_version
+      changed_when: false
+
+    - name: Check K3s version
+      command: k3s --version
+      register: k3s_version
+      changed_when: false
+
+    - name: Display Ollama version
+      debug:
+        msg: "{{ ollama_version.stdout }}"
+
+    - name: Display K3s version
+      debug:
+        msg: "{{ k3s_version.stdout }}"
+
+    - name: Display Kubernetes nodes
+      command: k3s kubectl get nodes -o wide
+      register: kubernetes_nodes
+      changed_when: false
+
+    - name: Show Kubernetes nodes
+      debug:
+        msg: "{{ kubernetes_nodes.stdout }}"
