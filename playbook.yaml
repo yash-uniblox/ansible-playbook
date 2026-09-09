@@ -56,6 +56,14 @@
         cmd: /tmp/install-rke2.sh
         creates: /usr/local/bin/rke2
 
+    - name: Enable and start RKE2 server
+      ansible.builtin.systemd:
+        name: rke2-server
+        enabled: true
+        state: started
+      when: ansible_service_mgr == "systemd"
+
+
     - name: Check if RKE2 kubectl exists
       ansible.builtin.stat:
         path: /var/lib/rancher/rke2/bin/kubectl
