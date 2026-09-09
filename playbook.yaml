@@ -28,3 +28,32 @@
         name: docker.io
         state: present
         update_cache: true
+
+    - name: Create RKE2 configuration directory
+      ansible.builtin.file:
+        path: /etc/rancher/rke2
+        state: directory
+        mode: "0755"
+
+    - name: Configure RKE2
+      ansible.builtin.copy:
+        dest: /etc/rancher/rke2/config.yaml
+        mode: "0644"
+        content: |
+          write-kubeconfig-mode: "0644"
+          disable:
+            - rke2-ingress-nginx
+          cni: canal
+
+    - name: Download RKE2 installation script
+      ansible.builtin.get_url:
+        url: https://get.rke2.io
+        dest: /tmp/install-rke2.sh
+        mode: "0755"
+
+    - name: Install RKE2
+      ansible.builtin.command:
+        cmd: /tmp/install-rke2.sh
+        creates: /usr/local/bin/rke2
+      when: ansible_service_mgr == "systemd"
+      
