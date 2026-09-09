@@ -16,3 +16,5 @@ vault_password_file
 # Python
 __pycache__/
 *.pyc
+
+.venv/
