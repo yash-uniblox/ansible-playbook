@@ -202,4 +202,13 @@
         mode: "0644"
       when: ansible_service_mgr == "systemd"
 
+    - name: Extract GitHub Actions Runner
+      ansible.builtin.unarchive:
+        src: "/tmp/actions-runner-{{ runner_version }}.tar.gz"
+        dest: /opt/actions-runner
+        remote_src: true
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+      when: ansible_service_mgr == "systemd"
+
 
