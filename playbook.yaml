@@ -55,5 +55,30 @@
       ansible.builtin.command:
         cmd: /tmp/install-rke2.sh
         creates: /usr/local/bin/rke2
-      when: ansible_service_mgr == "systemd"
+
+    - name: Check if RKE2 kubectl exists
+      ansible.builtin.stat:
+        path: /var/lib/rancher/rke2/bin/kubectl
+      register: rke2_kubectl
+
+    - name: Create kubectl symlink
+      ansible.builtin.file:
+        src: /var/lib/rancher/rke2/bin/kubectl
+        dest: /usr/local/bin/kubectl
+        state: link
+        force: true
+        follow: false
+      when: rke2_kubectl.stat.exists
+     
+    - name: Download Helm installation script
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+        dest: /tmp/install-helm.sh
+        mode: "0755"
+
+    - name: Install Helm
+      ansible.builtin.command:
+        cmd: /tmp/install-helm.sh
+        creates: /usr/local/bin/helm 
+
       
