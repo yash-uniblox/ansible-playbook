@@ -121,3 +121,13 @@
         kind: Namespace
         state: present
       when: ansible_service_mgr == "systemd"
+
+    - name: Install Longhorn
+      kubernetes.core.helm:
+        name: longhorn
+        chart_ref: longhorn/longhorn
+        release_namespace: longhorn-system
+        create_namespace: false
+        state: present
+      when: ansible_service_mgr == "systemd"
+
