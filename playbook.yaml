@@ -131,3 +131,26 @@
         state: present
       when: ansible_service_mgr == "systemd"
 
+    - name: Add Traefik Helm repository
+      kubernetes.core.helm_repository:
+        name: traefik
+        repo_url: https://traefik.github.io/charts
+      when: ansible_service_mgr == "systemd"
+
+    - name: Create Traefik namespace
+      kubernetes.core.k8s:
+        name: traefik
+        api_version: v1
+        kind: Namespace
+        state: present
+      when: ansible_service_mgr == "systemd"
+
+    - name: Install Traefik
+      kubernetes.core.helm:
+        name: traefik
+        chart_ref: traefik/traefik
+        release_namespace: traefik
+        create_namespace: false
+        state: present
+      when: ansible_service_mgr == "systemd"
+
