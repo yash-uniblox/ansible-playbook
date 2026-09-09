@@ -182,3 +182,15 @@
         group: "{{ ansible_user }}"
         mode: "0755"
       when: ansible_service_mgr == "systemd"
+
+    - name: Get latest GitHub Actions Runner version
+      ansible.builtin.uri:
+        url: https://api.github.com/repos/actions/runner/releases/latest
+        return_content: true
+      register: runner_release
+      when: ansible_service_mgr == "systemd"
+
+    - name: Set GitHub Actions Runner version
+      ansible.builtin.set_fact:
+        runner_version: "{{ runner_release.json.tag_name | regex_replace('^v', '') }}"
+      when: ansible_service_mgr == "systemd"
